@@ -48,11 +48,14 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 		if (mAdapter == null || mCount == 0){
 			return;
 		}
+		//TODO remove invisible views
 		fillViews();
+		fillViewsRight();
 		positionChilds();
 	}
 	
 	private void fillViews() {
+		//TODO use offset
 		int position = getLastVisiblePosition();
 		int right = 0;
 		while (right < getWidth() && position < mCount){
@@ -63,13 +66,15 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 		}
 	}
 	
-//	private void fillViewsRight(){
-//		int position = mFirstPosition;
-//		View left = getChildAt(position);
-//		int l = left.getLeft();
-//		while (mFirstPosition > 0 && getChildAt(mFirstPosition).getLeft())
-//		
-//	}
+	private void fillViewsRight(){
+		//TODO use offset
+		int position = mFirstPosition;
+		while (position > 0 && getChildAt(position).getLeft() >=0){
+			position --;
+			addAndMeasureView(mAdapter.getView(position, null, this));
+		}
+		mFirstPosition = position;		
+	}
 
 	private void positionChilds() {
 		int right = 0;
