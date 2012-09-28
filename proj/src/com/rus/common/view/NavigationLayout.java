@@ -4,6 +4,7 @@ import com.rus.common.view.NavigationScroller.ScrollingListener;
 
 import android.content.Context;
 import android.database.DataSetObserver;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,6 +25,7 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 	private int mFirstPosition;
 	private int mSelected;
 	private int mOffsetX;
+	private int mScrollDelta;
 	
 	private final NavigationScroller mScroller;
 	private final ScrollingListener mScrollListener = new ScrollListener();
@@ -49,47 +51,93 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 			return;
 		}
 		//TODO remove invisible views
+		int layoutOffset = computeLayoutOffset();
 		fillViews();
-		fillViewsRight();
-		positionChilds();
+//		fillViewsRight();
+		positionChilds(layoutOffset);
 	}
 	
-	private void fillViews() {
-		//TODO use offset
-		int position = getLastVisiblePosition();
-		int right = 0;
-		while (right < getWidth() && position < mCount){
-			View v = mAdapter.getView(position, null, this);
-			addAndMeasureView(v);
-			right += v.getMeasuredWidth();
-			position++;
-		}
-	}
-	
-	private void fillViewsRight(){
-		//TODO use offset
-		int position = mFirstPosition;
-		while (position > 0 && getChildAt(position).getLeft() >=0){
-			position --;
-			addAndMeasureView(mAdapter.getView(position, null, this));
-		}
-		mFirstPosition = position;		
-	}
-
-	private void positionChilds() {
-		int right = 0;
-		int drawOffset = mOffsetX;
+	private int computeLayoutOffset(){
+		int layoutOffset = mOffsetX;
 		for (int i = 0; i < getChildCount(); i++){
 			View v = getChildAt(i);
 			if (getPositionForView(v) < mSelected){
-				drawOffset -= v.getMeasuredWidth();
+				layoutOffset -= v.getMeasuredWidth();
 			} else {
 				break;
 			}
 		}
+		return layoutOffset;
+	}
+	
+	private void fillViews() {
+		//adds more views to the right edge of the view
+		//in case we are scrolling to the right so 
+		//right edge becomes visible to the user
+		int position = getLastVisiblePosition();
+		int right = (getChildCount() > 0 ? getChildAt(getChildCount() -1).getRight() + mScrollDelta: 0);
+		addViewsToRight(position, right);
+		//remove views out of screen from right side
+		//in case we are scrolling view to the left
+		//and right edge becomes invisible
+		Rect invalidRegion = removeViewsFromRight();
+		if (!invalidRegion.isEmpty()){
+			invalidate(invalidRegion);
+		}
+	}
+
+	private Rect removeViewsFromRight() {
+		Rect invalidRegion = new Rect();
+		while (getChildCount() > 0){
+			View rightMost = getChildAt(getChildCount() - 1);
+			int left = rightMost.getLeft() + mScrollDelta;
+			if (left > getWidth()){
+				Log.d(LOG_TAG, "fillViews() remove view left " + left + " width" + getWidth());
+				Rect r = new Rect();
+				rightMost.getHitRect(r);
+				invalidRegion.union(r);
+				removeViewInLayout(rightMost);
+			} else {
+				break;
+			}			
+		}
+		return invalidRegion;
+	}
+	
+	private void addViewsToRight(int position, int right){
+		while (right < getWidth() && position < mCount){
+			View v = mAdapter.getView(position, null, this);
+			Log.d(LOG_TAG, "fillViews() add view right " + right + " position " + position);
+			addAndMeasureView(v);
+			right += v.getMeasuredWidth();
+			position++;
+		}		
+	}
+	
+	private void fillViewsRight(){
+		int left = (getChildCount() > 0 ? getChildAt(0).getLeft() : 0) + mOffsetX;
+		while (mFirstPosition > 0 && left >=0){
+			mFirstPosition --;
+			View v = mAdapter.getView(mFirstPosition, null, this);
+			addAndMeasureView(v);
+			left -= v.getMeasuredWidth();
+		}
+		while (getChildCount() > 0){
+			View leftMost = getChildAt(0);
+			int right = leftMost.getRight() + mOffsetX;
+			if (right < 0){
+				removeViewInLayout(leftMost);
+			} else {
+				break;
+			}
+		}
+	}
+
+	private void positionChilds(int layoutOffset) {
+		int right = 0;
 		for (int i = 0; i < getChildCount(); i++){
 			View v = getChildAt(i);
-			v.layout(drawOffset + right, 0, drawOffset + right + v.getMeasuredWidth(), v.getMeasuredHeight());
+			v.layout(layoutOffset + right, 0, layoutOffset + right + v.getMeasuredWidth(), v.getMeasuredHeight());
 			right += v.getMeasuredWidth();
 		}
 	}
@@ -198,7 +246,7 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 			}				
 		} 
 		if (mSelected > mFirstPosition){
-			Log.d(LOG_TAG, "change selected right");
+//			Log.d(LOG_TAG, "change selected right");
 			View beforeSelected = getChildAt(mSelected - 1);
 			if (mOffsetX >= beforeSelected.getMeasuredWidth() / 2){
 				mSelected--;
@@ -223,12 +271,13 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 		
 		@Override
 		public void onStarted() {
-			Log.d(LOG_TAG, "onStarted()");
+//			Log.d(LOG_TAG, "onStarted()");
 		}
 
 		@Override
 		public void onScroll(int distance) {
-			Log.d(LOG_TAG, "onScroll(" + distance + ")");
+//			Log.d(LOG_TAG, "onScroll(" + distance + ")");
+			mScrollDelta = distance;
 			mOffsetX += distance;
 			adjustSelectedPosition();
 			requestLayout();
@@ -236,13 +285,13 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 
 		@Override
 		public void onJustify() {
-			Log.d(LOG_TAG, "onJustify()");
+//			Log.d(LOG_TAG, "onJustify()");
 			mScroller.scroll(mOffsetX, 0);
 		}
 
 		@Override
 		public void onFinished() {
-			Log.d(LOG_TAG, "onFinished()");
+//			Log.d(LOG_TAG, "onFinished()");
 		}
 	}
 	
