@@ -128,7 +128,7 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 	}
 
 	private int addViewsToLeft(int left) {
-		while (mFirstPosition > 0 && left >= 0){
+		while (mFirstPosition > 0 && (left >= 0 || mSelected < mFirstPosition)){
 			mFirstPosition --;
 			View v = mAdapter.getView(mFirstPosition, null, this);
 			Log.d(LOG_TAG, "fillViews() add view left " + left + " position " + mFirstPosition);
@@ -143,7 +143,7 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 		while (getChildCount() > 0){
 			View leftMost = getChildAt(0);
 			int right = leftMost.getRight() + mScrollDelta;
-			if (right < 0){
+			if (right < 0 && mSelected >= mFirstPosition){
 				mFirstPosition ++;
 				Log.d(LOG_TAG, "fillViews() remove view left " + right + " i=" + mFirstPosition);
 				Rect r = new Rect();
@@ -255,7 +255,7 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 		mOffsetX = 0;
 		requestLayout();
 	}
-
+	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		super.onTouchEvent(event);
