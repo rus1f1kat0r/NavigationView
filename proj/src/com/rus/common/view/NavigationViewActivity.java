@@ -18,6 +18,7 @@ public class NavigationViewActivity extends Activity {
     
     public void select(View v){
     	AdapterView<?> view = (AdapterView<?>) findViewById(R.id.navigator);
-    	view.setSelection(position >= view.getAdapter().getCount() - 1? position = 0 : ++position);
+    	view.setSelection(position <= 0 ? position = view.getAdapter().getCount() - 1 : --position);
+//    	view.setSelection(position >= view.getAdapter().getCount() - 1? position = 0 : ++position);
     }
 }
