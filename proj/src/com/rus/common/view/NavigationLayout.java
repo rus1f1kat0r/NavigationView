@@ -247,30 +247,41 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 
 	@Override
 	public void setSelection(int position) {
+		setSelection(position, true);
+	}
+	
+	public void setSelection(int position, boolean animated){
 		if (position == mSelected){
 			return;
 		}
 		if (position < 0 || position == mCount){
 			throw new IllegalArgumentException("Invalid position " + position);
 		}
-		if (position > mSelected){
-			//calculate scroll distance between 
-			//current selected position and new one
-			int s = computeLayoutOffset();
-			mSelected = position;
-			fillViews();
-			int scroll = computeLayoutOffset() - s;
-			mOffsetX -= scroll;
-			mInSelection = true;
-			mScroller.scroll(-scroll, 0);			
+		//TODO decompose method
+		if (animated){
+			if (position > mSelected){
+				//calculate scroll distance between 
+				//current selected position and new one
+				int s = computeLayoutOffset();
+				mSelected = position;
+				fillViews();
+				int scroll = computeLayoutOffset() - s;
+				mOffsetX -= scroll;
+				mInSelection = true;
+				mScroller.scroll(-scroll, 0);			
+			} else {
+				int oldSelected = mSelected;
+				mSelected = position;
+				fillViewsRight();
+				int scroll = computeDistanceFromFirst(oldSelected);
+				mOffsetX -= scroll;
+				mInSelection = true;
+				mScroller.scroll(-scroll, 0);
+			}			
 		} else {
-			int oldSelected = mSelected;
 			mSelected = position;
-			fillViewsRight();
-			int scroll = computeDistanceFromFirst(oldSelected);
-			mOffsetX -= scroll;
-			mInSelection = true;
-			mScroller.scroll(-scroll, 0);
+			mOffsetX = 0;
+			requestLayout();
 		}
 	}
 	
