@@ -1,10 +1,10 @@
 package com.rus.common.view;
 
-import com.rus.common.view.NavigationScroller.ScrollingListener;
-
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.graphics.Rect;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,6 +14,8 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+
+import com.rus.common.view.NavigationScroller.ScrollingListener;
 
 public class NavigationLayout extends AdapterView<BaseAdapter> {
 	private static final String LOG_TAG = "NavigationLayout";
@@ -333,6 +335,29 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 			}
 		}
 	}
+	
+	@Override
+	protected Parcelable onSaveInstanceState() {
+	    Parcelable superState = super.onSaveInstanceState();
+	    NavigationState state = new NavigationState(superState);
+	    state.mFirstPosition = mFirstPosition;
+	    state.mSelected = mSelected;
+	    state.mOffsetX = mOffsetX;
+	    return state;
+	}
+	
+	@Override
+	protected void onRestoreInstanceState(Parcelable st) {
+	    if(st instanceof NavigationState) {
+	    	NavigationState state = (NavigationState)st;
+	    	super.onRestoreInstanceState(state.getSuperState());
+	    	this.mFirstPosition = state.mFirstPosition;
+	    	this.mSelected = state.mSelected;
+	    	this.mOffsetX = state.mOffsetX;
+	    } else {
+	    	super.onRestoreInstanceState(st);	    	
+	    }
+	}
 
 	private class NavigationViewObserver extends DataSetObserver{
 		@Override
@@ -381,6 +406,41 @@ public class NavigationLayout extends AdapterView<BaseAdapter> {
 			}
 			Log.d(LOG_TAG, "onFinished()" + mOffsetX);
 		}
+	}
+	
+	protected static class NavigationState extends BaseSavedState {
+		private int mFirstPosition;
+		private int mSelected;
+		private int mOffsetX;
+
+		NavigationState(Parcelable superState) {
+			super(superState);
+		}
+		
+		private NavigationState(Parcel in) {
+			super(in);
+			this.mFirstPosition = in.readInt();
+			this.mSelected = in.readInt();
+			this.mOffsetX = in.readInt();
+		}
+		
+		@Override
+		public void writeToParcel(Parcel out, int flags) {
+			super.writeToParcel(out, flags);
+			out.writeInt(mFirstPosition);
+			out.writeInt(mSelected);
+			out.writeInt(mOffsetX);
+		}
+		//required field that makes Parcelables from a Parcel
+		public static final Parcelable.Creator<NavigationState> CREATOR =
+				new Parcelable.Creator<NavigationState>() {
+			public NavigationState createFromParcel(Parcel in) {
+				return new NavigationState(in);
+			}
+			public NavigationState[] newArray(int size) {
+				return new NavigationState[size];
+			}
+		};
 	}
 	
 	private static class TestAdapter extends BaseAdapter{
